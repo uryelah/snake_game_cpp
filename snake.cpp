@@ -202,6 +202,12 @@ void logic()
 
   for (int i = 0; i < score; i++)
   {
+
+    if (snake_x == tailPosition[i][0] && snake_y == tailPosition[i][1])
+    {
+      gameOver = true;
+    }
+
     if (i == 0)
     {
       prev_tail[0] = tailPosition[0][0];
