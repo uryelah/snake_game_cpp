@@ -2,6 +2,7 @@
 #include <chrono>
 #include <windows.h>
 #include <stdlib.h>
+#include <stdio.h>
 #include <conio.h>
 
 int const x = 50;
@@ -42,6 +43,7 @@ void setUp()
   score = 0;
   prev_score = 0;
   frames = 0;
+  dir = DOWN;
   spawnFruit();
 }
 
@@ -55,12 +57,16 @@ void gotoxy(int x, int y)
 
 void init_board(int x, int y)
 {
+  int grass;
+
   for (int i = 0; i < x + 2; i++)
   {
+    grass = rand() % 100;
+
     if ((i == x + 1) || (i % (x + 2) == 0))
     {
-      board_header.append("|");
-      board_body.append("|");
+      board_header.append(" ");
+      board_body.append(i % 5 == 0 ? "^" : " ");
 
       if (i == x + 1)
       {
@@ -70,8 +76,8 @@ void init_board(int x, int y)
     }
     else
     {
-      board_header.append("-");
-      board_body.append(" ");
+      board_header.append(i % 3 == 0 ? "`" : " ");
+      board_body.append(grass > 70 ? (i % 2 == 0 ? "^" : "`") : " ");
     }
   }
 
@@ -83,7 +89,16 @@ void init_board(int x, int y)
     }
     else
     {
-      board.append(board_body);
+      if (i % 2 == 0)
+      {
+        board.append(board_body);
+      }
+      else
+      {
+        board.append(" ");
+        board.append(board_body);
+        board.erase((i * (x + 3)) + x + 2, 1);
+      }
     }
   }
 }
@@ -91,27 +106,65 @@ void init_board(int x, int y)
 void renderFruit()
 {
   gotoxy(coords[0], coords[1]);
-  std::cout << "F";
+  std::cout << "\033[41m"
+            << "\033[93m"
+            << "*"
+            << "\033[0m"
+            << "\033[0m";
 }
 
 void render()
 {
   gotoxy(0, 0);
-  std::cout << board;
+  std::cout << "\033[47m"
+            << "\033[32m" << board << "\033[0m"
+            << "\033[0m";
   renderFruit();
   gotoxy(snake_x, snake_y);
-  std::cout << 'O';
+
+  if (dir > 2)
+  {
+    gotoxy(snake_x, snake_y);
+    std::cout << "\033[42m"
+              << "\033[91m"
+              << ":"
+              << "\033[0m"
+              << "\033[0m";
+  }
+  else
+  {
+    gotoxy(snake_x, snake_y);
+    std::cout << "\033[42m"
+              << "\033[91m"
+              << ":"
+              << "\033[0m"
+              << "\033[0m";
+  }
 
   for (int i = 0; i < score; i++)
   {
     gotoxy(tailPosition[i][0], tailPosition[i][1]);
-    std::cout << 'o';
+
+    if ((i > 0) && (i == score - 1))
+    {
+      std::cout << "\033[42m"
+                << "\033[31m" << (dir == 1 ? ">" : "") << (dir == 2 ? "<" : "") << (dir == 3 ? "V" : "") << (dir == 4 ? "A" : "") << "\033[0m"
+                << "\033[0m";
+    }
+    else
+    {
+      std::cout << "\033[42m"
+                << "\033[33m" << (dir < 3 ? "-" : "|") << "\033[0m"
+                << "\033[0m";
+    }
   }
 
   gotoxy(x / 2 - 7, y + 3);
   std::cout << "       .-----.\n";
   gotoxy(x / 2 - 7, y + 4);
-  std::cout << "Score: | " << (score < 10 ? "00" : "") << ((score >= 10) && (score < 100) ? "0" : "") << score << " |\n";
+  std::cout << "Score: | "
+            << "\033[32m" << (score < 10 ? "00" : "") << ((score >= 10) && (score < 100) ? "0" : "") << score << "\033[0m"
+            << " |\n";
   gotoxy(x / 2 - 7, y + 5);
   std::cout << "       '-----'\n";
 }
@@ -153,9 +206,9 @@ void logic()
   {
   case 1:
     snake_x -= 1;
-    if (snake_x == 0)
+    if (snake_x == -1)
     {
-      snake_x = x;
+      snake_x = x + 1;
     }
 
     if (prevDir == 2)
@@ -165,9 +218,9 @@ void logic()
     break;
   case 2:
     snake_x += 1;
-    if (snake_x == x)
+    if (snake_x == x + 2)
     {
-      snake_x = 0;
+      snake_x = -1;
     }
 
     if (prevDir == 1)
@@ -177,11 +230,11 @@ void logic()
     break;
   case 3:
     snake_y -= 1;
-    if (snake_y == 0)
+    if (snake_y == -1)
     {
       snake_y = y + 1;
     }
-    
+
     if (prevDir == 4)
     {
       snake_x += 1;
@@ -191,9 +244,9 @@ void logic()
     snake_y += 1;
     if (snake_y == y + 1)
     {
-      snake_y = 0;
+      snake_y = -1;
     }
-    
+
     if (prevDir == 3)
     {
       snake_x -= 1;
@@ -275,6 +328,43 @@ int main()
 
     frames += 1;
   };
-  
+
+  gotoxy(0, 0);
+
+  for (int i = 0; i < y + 2; i++)
+  {
+    for (int j = 0; j < x + 2; j++)
+    {
+      if ((i >= 4 && i < y - 2) && (j >= 4 && j < x - 2))
+      {
+        std::cout << " ";
+      }
+      else
+      {
+        std::cout << "-";
+      }
+    }
+    std::cout << "\n";
+  }
+
+  gotoxy(12, 8);
+
+  std::cout << "\033[32m" << " __  __  __   __  __";
+  gotoxy(12, 9);
+
+  std::cout << "|_  |   |  | | / |__ *    " << "\033[92m" << score;
+  gotoxy(12, 10);
+
+  std::cout << "\033[32m" << "__| |__ |__| | \\ |__ *" << "\033[0m\n";
+
+  gotoxy((x/2) - 5, (y/2) + 3);
+
+  std::cout << "GAME OVER!";
+
+  gotoxy(x / 2 - 7, y + 3);
+
+  std::cout << "                                       \n                                          \n                                          \n";
+
+  Sleep(10000);
   system("cls");
 }
