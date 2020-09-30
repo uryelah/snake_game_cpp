@@ -7,18 +7,12 @@
 int const x = 50;
 int const y = 20;
 
-long frames = 0;
+int snake_x, snake_y, prev_x, prev_y, score, prev_score, frames, tail[100], tailPosition[100][2], coords[2], prevDir;
 
-int snake_x, snake_y, prev_x, prev_y, score, prev_score;
-
-int tail[100];
-int tailPosition[100][2];
+std::string board_header, board_body, board;
 
 bool gameOver;
 
-std::string board_header = "";
-std::string board_body = "";
-std::string board = "";
 enum eDirection
 {
   STOP = 0,
@@ -27,18 +21,28 @@ enum eDirection
   UP,
   DOWN
 };
+
 eDirection dir;
 
-int coords[2] = {2, 3};
+void spawnFruit()
+{
+  coords[0] = rand() % x + 1;
+  coords[1] = rand() % y + 1;
+}
 
 void setUp()
 {
+  board_header = "";
+  board_body = "";
+  board = "";
   gameOver = false;
   dir = STOP;
   snake_x = x / 2;
   snake_y = y / 2;
   score = 0;
   prev_score = 0;
+  frames = 0;
+  spawnFruit();
 }
 
 void gotoxy(int x, int y)
@@ -84,12 +88,6 @@ void init_board(int x, int y)
   }
 }
 
-void spawnFruit()
-{
-  coords[0] = rand() % x + 1;
-  coords[1] = rand() % y + 1;
-}
-
 void renderFruit()
 {
   gotoxy(coords[0], coords[1]);
@@ -110,13 +108,18 @@ void render()
     std::cout << 'o';
   }
 
-  gotoxy(x / 2 - 3, y + 3);
-  std::cout << coords[0] << " - " << coords[1] << "\n"
-            << "Score: " << score;
+  gotoxy(x / 2 - 7, y + 3);
+  std::cout << "       .-----.\n";
+  gotoxy(x / 2 - 7, y + 4);
+  std::cout << "Score: | " << (score < 10 ? "00" : "") << ((score >= 10) && (score < 100) ? "0" : "") << score << " |\n";
+  gotoxy(x / 2 - 7, y + 5);
+  std::cout << "       '-----'\n";
 }
 
 void input()
 {
+  prevDir = dir;
+
   if (_kbhit())
   {
     switch (_getch())
@@ -154,12 +157,22 @@ void logic()
     {
       snake_x = x;
     }
+
+    if (prevDir == 2)
+    {
+      snake_y += 1;
+    }
     break;
   case 2:
     snake_x += 1;
     if (snake_x == x)
     {
       snake_x = 0;
+    }
+
+    if (prevDir == 1)
+    {
+      snake_y -= 1;
     }
     break;
   case 3:
@@ -168,12 +181,22 @@ void logic()
     {
       snake_y = y + 1;
     }
+    
+    if (prevDir == 4)
+    {
+      snake_x += 1;
+    }
     break;
   case 4:
     snake_y += 1;
     if (snake_y == y + 1)
     {
       snake_y = 0;
+    }
+    
+    if (prevDir == 3)
+    {
+      snake_x -= 1;
     }
     break;
   default:
@@ -252,4 +275,6 @@ int main()
 
     frames += 1;
   };
+  
+  system("cls");
 }
